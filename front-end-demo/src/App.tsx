@@ -29,6 +29,10 @@ const App = ({
   const [textInput, setTextInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   const resetAllStates = useCallback(() => {
     setIsConnected(false);
     setIsConnecting(false);
@@ -36,11 +40,9 @@ const App = ({
     setIsAgentSpeaking(false);
     setIsMuted(false);
     setTextInput("");
-    setMessages([]);
     setStatus("Ready to connect");
   }, []);
 
-  // Force reset function for troubleshooting
   const forceReset = useCallback(() => {
     try {
       client.stopSession();
@@ -82,8 +84,9 @@ const App = ({
     onTranscriptRef.current = onTranscript;
   }, [onTranscript]);
 
-  // Setup event listeners function that we can call multiple times
   const setupEventListeners = useCallback(() => {
+    client.removeAllListeners();
+
     const handleSessionStarted = () => {
       setIsConnected(true);
       setIsConnecting(false);
@@ -142,7 +145,6 @@ const App = ({
       setIsAgentSpeaking(false);
       setIsMuted(false);
       setTextInput("");
-      setMessages([]);
       onErrorRef.current?.(error);
       setTimeout(() => resetAllStates(), 3000);
     };
@@ -163,14 +165,18 @@ const App = ({
     client.on("error", handleError);
   }, [client, addMessage, resetAllStates, onTranscriptRef]);
 
-  // Setup initial listeners on mount
+  // Setup initial listeners on mount and cleanup on unmount
   useEffect(() => {
     setupEventListeners();
-  }, [setupEventListeners]);
+
+    // Cleanup function to remove listeners when component unmounts
+    return () => {
+      client.removeAllListeners();
+    };
+  }, [setupEventListeners, client]);
 
   const getAccessToken = async () => {
-    const modeParam = mode === "webcall" ? "webcall" : "chat";
-    const endpoint = `http://localhost:8080/create-web-call?mode=${modeParam}`;
+    const endpoint = `http://localhost:8080/create-web-call?mode=${mode}`;
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -194,12 +200,12 @@ const App = ({
     try {
       setIsConnecting(true);
       setStatus("Getting access token...");
+      // Clear previous chat only when starting a new session
+      setMessages([]);
 
       const { token, host } = await getAccessToken();
 
       setStatus(`Connecting to ${mode} session...`);
-
-      // Re-setup event listeners before connecting (since stopSession cleared them)
       setupEventListeners();
 
       await client.startSession({
@@ -233,7 +239,7 @@ const App = ({
   };
 
   const sendTextMessage = () => {
-    if (!textInput.trim() || !isConnected) return;
+    if (!textInput.trim() || !isConnected || !isAgentConnected) return;
 
     addMessage("user", textInput);
     client.sendTextMessage(textInput);
@@ -291,8 +297,8 @@ const App = ({
             {/* Debug info */}
             <div className="mt-2 text-xs opacity-50">
               Connected: {isConnected ? "✅" : "❌"} | Agent:{" "}
-              {isAgentConnected ? "✅" : "❌"} | Connecting:{" "}
-              {isConnecting ? "🔄" : "⏸️"}
+              {isAgentConnected ? "✅" : "❌"} | status:{" "}
+              {isConnecting ? "connected" : "disconnected"}
             </div>
           </div>
 
@@ -392,11 +398,14 @@ const App = ({
                     }
                   }}
                   placeholder="Type your message..."
-                  className="flex-1 rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                  disabled={!isConnected || !isAgentConnected}
+                  className="flex-1 rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
                   onClick={sendTextMessage}
-                  disabled={!textInput.trim() || !isConnected}
+                  disabled={
+                    !textInput.trim() || !isConnected || !isAgentConnected
+                  }
                   className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50"
                 >
                   Send

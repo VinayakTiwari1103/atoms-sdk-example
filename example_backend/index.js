@@ -12,12 +12,12 @@ app.post("/create-web-call", async (req, res) => {
   const { mode } = req.query;
   const { agentId } = req.body;
 
-  const endpoint = mode === "chat" ? "chat" : "webcall";
   const payload = { agentId };
 
   try {
+    console.log(req.query.mode);
     const response = await axios.post(
-      `https://atoms-api.smallest.ai/api/v1/conversation/${endpoint}`,
+      `https://atoms-api.smallest.ai/api/v1/conversation/${mode}`,
       payload,
       {
         headers: {
@@ -31,10 +31,10 @@ app.post("/create-web-call", async (req, res) => {
     res.status(201).json(response.data);
   } catch (error) {
     console.error(
-      `Error creating ${endpoint}:`,
+      `Error creating ${mode}:`,
       error.response?.data || error.message
     );
-    res.status(500).json({ error: `Failed to create ${endpoint}` });
+    res.status(500).json({ error: `Failed to create ${mode}` });
   }
 });
 
