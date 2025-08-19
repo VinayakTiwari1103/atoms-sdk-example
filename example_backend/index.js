@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 const app = express();
-const port = 8080;
+const port = 8089;
 
 app.use(cors());
 
@@ -10,18 +10,37 @@ app.use(express.json());
 
 app.post("/create-web-call", async (req, res) => {
   const { mode } = req.query;
-  const { agentId } = req.body;
+  const { agentId, apiKey } = req.body;
+
+  // Validate agentId
+  if (!agentId || typeof agentId !== "string" || agentId.trim() === "") {
+    return res
+      .status(400)
+      .json({
+        error:
+          "agentId is required and must be a non-empty string",
+      });
+  }
+  // Validate apiKey
+  if (!apiKey || typeof apiKey !== "string" || apiKey.trim() === "") {
+    return res
+      .status(400)
+      .json({
+        error:
+          "apiKey is required and must be a non-empty string",
+      });
+  }
 
   const payload = { agentId };
 
   try {
-    console.log(req.query.mode);
+    console.log(`Requested mode: ${mode}, agentId: ${agentId}, apiKey: ${apiKey}`);
     const response = await axios.post(
       `https://atoms-api.smallest.ai/api/v1/conversation/${mode}`,
       payload,
       {
         headers: {
-          Authorization: "Bearer your-api-key",
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
       }
