@@ -10,7 +10,7 @@ interface AtomsVoiceChatProps {
 }
 
 const App = ({
-  agentId = "your-agent-id",
+  agentId: agentIdProp = "68a40d0d6989a10b1631501f",
   onError,
   onTranscript,
 }: AtomsVoiceChatProps) => {
@@ -27,6 +27,7 @@ const App = ({
     Array<{ id: number; sender: string; text: string; timestamp: number }>
   >([]);
   const [textInput, setTextInput] = useState("");
+  const [agentId, setAgentId] = useState(agentIdProp);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -176,7 +177,7 @@ const App = ({
   }, [setupEventListeners, client]);
 
   const getAccessToken = async () => {
-    const endpoint = `http://localhost:8080/create-web-call?mode=${mode}`;
+    const endpoint = `http://localhost:8089/create-web-call?mode=${mode}`;
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -256,6 +257,20 @@ const App = ({
             {mode === "webcall" ? "Voice" : "Text"} Chat
           </h2>
 
+          {/* Agent ID Input */}
+          <div className="mb-4 flex items-center gap-2">
+            <label htmlFor="agentIdInput" className="text-gray-400 text-sm">Agent ID:</label>
+            <input
+              id="agentIdInput"
+              type="text"
+              value={agentId}
+              onChange={e => setAgentId(e.target.value)}
+              disabled={isConnected}
+              className="flex-1 rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="Enter Agent ID"
+            />
+          </div>
+
           {/* Mode Toggle */}
           <div className="mb-4 flex rounded-lg bg-gray-800 p-1">
             <button
@@ -296,8 +311,8 @@ const App = ({
             )}
             {/* Debug info */}
             <div className="mt-2 text-xs opacity-50">
-              Connected: {isConnected ? "✅" : "❌"} | Agent:{" "}
-              {isAgentConnected ? "✅" : "❌"} | status:{" "}
+              Connected: {isConnected ? "✅" : "❌"} | Agent: {" "}
+              {isAgentConnected ? "✅" : "❌"} | status: {" "}
               {isConnecting ? "connected" : "disconnected"}
             </div>
           </div>
