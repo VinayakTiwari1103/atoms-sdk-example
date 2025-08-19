@@ -28,6 +28,7 @@ const App = ({
   >([]);
   const [textInput, setTextInput] = useState("");
   const [agentId, setAgentId] = useState(agentIdProp);
+  const [apiKey, setApiKey] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -184,7 +185,7 @@ const App = ({
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ agentId }),
+      body: JSON.stringify({ agentId, apiKey }),
     });
     if (!response.ok) {
       throw new Error(`Failed to get access token: ${response.statusText}`);
@@ -268,6 +269,19 @@ const App = ({
               disabled={isConnected}
               className="flex-1 rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Enter Agent ID"
+            />
+          </div>
+          {/* API Key Input */}
+          <div className="mb-4 flex items-center gap-2">
+            <label htmlFor="apiKeyInput" className="text-gray-400 text-sm">API Key:</label>
+            <input
+              id="apiKeyInput"
+              type="text"
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              disabled={isConnected}
+              className="flex-1 rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="Enter API Key"
             />
           </div>
 
